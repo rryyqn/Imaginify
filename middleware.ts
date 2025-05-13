@@ -6,11 +6,19 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks/clerk(.*)",
   "/api/webhooks/stripe(.*)",
+  "/profile(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
-    await auth.protect();
+    try {
+      await auth.protect();
+    } catch {
+      // If there's an auth error, redirect to sign-in
+      const signInUrl = new URL("/sign-in", req.url);
+      signInUrl.searchParams.set("redirect_url", req.url);
+      return Response.redirect(signInUrl);
+    }
   }
 });
 
